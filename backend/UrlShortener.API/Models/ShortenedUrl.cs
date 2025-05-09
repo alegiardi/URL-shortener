@@ -8,6 +8,6 @@ namespace UrlShortener.API.Models
         public required string OriginalUrl { get; set; }
         public required string Shortened { get; set; }
         public DateTime CreatedAt { get; set; }
-        public required int ClickCount { get; set; }
+        public required int ClickCount { get; set; } = 0;
     }
 }
