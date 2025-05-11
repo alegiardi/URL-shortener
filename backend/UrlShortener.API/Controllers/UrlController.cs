@@ -64,11 +64,11 @@ namespace UrlShortener.API.Controllers
                     return BadRequest("Original URL is required");
                 }
 
-                // Check if URL already exists to prevent duplicates
+                // check if URL already exists to prevent duplicates
                 var existingUrl = await _context.ShortenedUrls.FirstOrDefaultAsync(u => u.OriginalUrl == originalUrl);
                 if (existingUrl != null)
                 {
-                    return Ok(existingUrl); // Return existing shortened URL
+                    return Ok(existingUrl); // return existing shortened URL
                 }
 
                 var shortCode = UrlController.GenerateShortCode();
