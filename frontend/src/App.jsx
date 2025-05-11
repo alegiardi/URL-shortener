@@ -1,34 +1,192 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [originalUrl, setOriginalUrl] = useState("");
+  const [shortenedUrls, setShortenedUrls] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  useEffect(() => {
+    fetchUrls();
+  }, []);
+
+  const fetchUrls = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/url");
+      if (!response.ok) {
+        throw new Error("Failed to fetch URLs");
+      }
+      const data = await response.json();
+      setShortenedUrls(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!originalUrl.trim()) {
+      setError("Please enter a URL");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+
+      const response = await fetch("/api/url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ originalUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to shorten URL");
+      }
+
+      setSuccess("URL shortened successfully.");
+      setOriginalUrl("");
+      fetchUrls();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (shortCode) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/url/${shortCode}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete URL");
+      }
+
+      setSuccess("URL delete successfully");
+      fetchUrls();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdate = async (shortCode, newUrl) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/url/${shortCode}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ newUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update URL");
+      }
+
+      setSuccess("URL updated successfully");
+      fetchUrls();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="app-container">
+      <h1>URL Shortener</h1>
+
+      <section className="form-section">
+        <form onSubmit={handleSubmit}>
+          <div className="input-group">
+            <input
+              type="url"
+              placeholder="Enter a URL to shorten"
+              value={originalUrl}
+              onChange={(e) => setOriginalUrl(e.target.value)}
+              required
+            />
+            <button type="submit" disabled={loading}>
+              {loading ? "Shortening..." : "Shorten URL"}
+            </button>
+          </div>
+        </form>
+
+        {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
+      </section>
+
+      <section className="urls-section">
+        <h2>Your Shortened URLs</h2>
+        {loading && <div className="loading">Loading...</div>}
+
+        {shortenedUrls.length > 0 ? (
+          <ul className="url-list">
+            {shortenedUrls.map((url) => (
+              <li key={url.id} className="url-item">
+                <div className="url-details">
+                  <div>
+                    <strong>Original:</strong> {url.originalUrl}
+                  </div>
+                  <div>
+                    <strong>Shortened:</strong>{" "}
+                    <a
+                      href={`/api/url/${url.shortened}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => {
+                        fetch(`/api/url/${url.shortened}/increment`, {
+                          method: "POST",
+                        }).then(() => {
+                          fetchUrls();
+                        });
+                      }}
+                    >
+                      {window.location.origin}/api/url/{url.shortened}
+                    </a>
+                  </div>
+                  <div className="url-meta">
+                    <span>Clicks: {url.clickCount}</span>
+                  </div>
+                </div>
+                <div className="url-actions">
+                  <button
+                    onClick={() => {
+                      const newUrl = prompt("Enter new URL: ", url.originalUrl);
+                      if (newUrl && newUrl !== url.originalUrl) {
+                        handleUpdate(url.shortened, newUrl);
+                      }
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button onClick={() => handleDelete(url.shortened)}>
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No shortened URLs yet. Create one by entering a URL above.</p>
+        )}
+      </section>
+    </div>
   );
 }
 
