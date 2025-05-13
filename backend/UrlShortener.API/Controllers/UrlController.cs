@@ -9,9 +9,14 @@ namespace UrlShortener.API.Controllers
     [Route("api/[controller]")]
     public class UrlController : ControllerBase
     {
-        // TODO: how to remove this warning without making these nullable
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UrlController> _logger;
+
+        public UrlController(ApplicationDbContext context, ILogger<UrlController> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
 
         // GET: api/url
         [HttpGet]
@@ -41,34 +46,54 @@ namespace UrlShortener.API.Controllers
                     return NotFound("URL not found");
                 }
 
+                // Only increment count when actually redirecting
                 url.ClickCount++;
                 await _context.SaveChangesAsync();
+                _logger.LogInformation($"Incremented click count for {shortCode} to {url.ClickCount}");
 
                 return Redirect(url.OriginalUrl);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,"Error getting and redirecting URL");
+                _logger.LogError(ex, "Error getting and redirecting URL");
                 return StatusCode(500, "Internal Server Error");
             }
         }
 
+        public class UrlCreateRequest
+        {
+            public string OriginalUrl { get; set; }
+        }
+
+        public class UrlUpdateRequest
+        {
+            public string NewUrl { get; set; }
+        }
+
         // POST: api/url
         [HttpPost]
-        public async Task<ActionResult<ShortenedUrl>> CreateShortUrl([FromBody] string originalUrl)
+        public async Task<ActionResult<ShortenedUrl>> CreateShortUrl([FromBody] UrlCreateRequest request)
         {
             try
             {
-                if (string.IsNullOrEmpty(originalUrl))
+                if (string.IsNullOrEmpty(request.OriginalUrl))
                 {
                     return BadRequest("Original URL is required");
+                }
+
+                string originalUrl = request.OriginalUrl;
+                if (!originalUrl.StartsWith("https://") && !originalUrl.StartsWith("http://"))
+                {
+                    originalUrl = "https://" + originalUrl;
                 }
 
                 // Check if URL already exists to prevent duplicates
                 var existingUrl = await _context.ShortenedUrls.FirstOrDefaultAsync(u => u.OriginalUrl == originalUrl);
                 if (existingUrl != null)
                 {
-                    return Ok(existingUrl); // Return existing shortened URL
+                    var baseUrl = $"{Request.Scheme}://{Request.Host}/";
+                    var shortenedUrl = baseUrl + existingUrl.Shortened;
+                    return Ok(new { OriginalUrl = originalUrl, ShortenedUrl = shortenedUrl }); 
                 }
 
                 var shortCode = UrlController.GenerateShortCode();
@@ -83,10 +108,10 @@ namespace UrlShortener.API.Controllers
                 _context.ShortenedUrls.Add(shortUrl);
                 await _context.SaveChangesAsync();
 
-                var baseUrl = $"{Request.Scheme}://{Request.Host}/";
-                var shortenedUrl = baseUrl + shortCode;
+                var newBaseUrl = $"{Request.Scheme}://{Request.Host}/";
+                var newShortenedUrl = newBaseUrl + shortCode;
             
-                return CreatedAtAction(nameof(GetAndRedirectUrl), new {shortCode = shortUrl.Shortened}, new { OriginalUrl = originalUrl, ShortenedUrl = shortenedUrl });
+                return Ok(new { OriginalUrl = originalUrl, ShortenedUrl = newShortenedUrl });
             }
             catch (Exception ex)
             {
@@ -97,11 +122,11 @@ namespace UrlShortener.API.Controllers
 
         // PUT: api/url/{shortCode}
         [HttpPut("{shortCode}")]
-        public async Task<IActionResult> UpdateUrl(string shortCode, [FromBody] string newUrl)
+        public async Task<IActionResult> UpdateUrl(string shortCode, [FromBody] UrlUpdateRequest request)
         {
             try
             {
-                if (string.IsNullOrEmpty(newUrl))
+                if (string.IsNullOrEmpty(request.NewUrl))
                 {
                     return BadRequest("New URL is required");
                 }
@@ -110,6 +135,12 @@ namespace UrlShortener.API.Controllers
                 if (url == null)
                 {
                     return NotFound("URL not found");
+                }
+
+                string newUrl = request.NewUrl;
+                if (!newUrl.StartsWith("https://") && !newUrl.StartsWith("http://"))
+                {
+                    newUrl = "https://" + newUrl;
                 }
 
                 url.OriginalUrl = newUrl;

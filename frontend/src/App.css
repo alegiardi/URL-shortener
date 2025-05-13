@@ -1,42 +1,79 @@
 #root {
   max-width: 1280px;
-  margin: 0 auto;
+  margin: auto;
   padding: 2rem;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 2rem;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.form-section {
+  margin: 2rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.input-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1rem;
 }
 
-.card {
-  padding: 2em;
+.input-group input {
+  flex: 1;
+  max-width: 500px;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
-.read-the-docs {
-  color: #888;
+.url-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.url-item {
+  background: #dc9b9b;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: left;
+  word-break: break-all;
+}
+
+.url-details {
+  margin-bottom: 1rem;
+}
+
+.url-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  color: #000000;
+}
+
+.url-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.error-message {
+  color: #dc3545;
+  margin: 1rem 0;
+}
+
+.success-message {
+  color: #28a745;
+  margin: 1rem 0;
+}
+
+.loading {
+  color: #666;
+  margin: 1rem 0;
 }
