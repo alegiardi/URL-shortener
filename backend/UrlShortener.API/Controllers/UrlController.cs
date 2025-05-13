@@ -25,7 +25,7 @@ namespace UrlShortener.API.Controllers
             try
             {
                 var urls = await _context.ShortenedUrls.ToListAsync();
-                return Ok(urls); // TODO: what is this doing what is Ok????
+                return Ok(urls);
             }
             catch (Exception ex)
             {
@@ -46,7 +46,6 @@ namespace UrlShortener.API.Controllers
                     return NotFound("URL not found");
                 }
 
-                // Only increment count when actually redirecting
                 url.ClickCount++;
                 await _context.SaveChangesAsync();
                 _logger.LogInformation($"Incremented click count for {shortCode} to {url.ClickCount}");
@@ -58,16 +57,6 @@ namespace UrlShortener.API.Controllers
                 _logger.LogError(ex, "Error getting and redirecting URL");
                 return StatusCode(500, "Internal Server Error");
             }
-        }
-
-        public class UrlCreateRequest
-        {
-            public string OriginalUrl { get; set; }
-        }
-
-        public class UrlUpdateRequest
-        {
-            public string NewUrl { get; set; }
         }
 
         // POST: api/url
