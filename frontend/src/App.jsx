@@ -74,7 +74,7 @@ function App() {
         throw new Error("Failed to delete URL");
       }
 
-      setSuccess("URL delete successfully");
+      setSuccess("URL deleted successfully");
       fetchUrls();
     } catch (err) {
       setError(err.message);
@@ -139,31 +139,30 @@ function App() {
           <ul className="url-list">
             {shortenedUrls.map((url) => (
               <li key={url.id} className="url-item">
-                <div className="url-details">
-                  <div>
-                    <strong>Original:</strong> {url.originalUrl}
-                  </div>
-                  <div>
-                    <strong>Shortened:</strong>{" "}
-                    <a
-                      href={`/api/url/${url.shortened}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => {
-                        fetch(`/api/url/${url.shortened}/increment`, {
-                          method: "POST",
-                        }).then(() => {
-                          fetchUrls();
-                        });
-                      }}
-                    >
-                      {window.location.origin}/api/url/{url.shortened}
-                    </a>
-                  </div>
-                  <div className="url-meta">
-                    <span>Clicks: {url.clickCount}</span>
-                  </div>
-                </div>
+                 <div className="url-meta">
+                  <span>
+                  <strong>The new ✨shorter✨ link:</strong>{" "}
+                  <a
+                    href={`/api/url/${url.shortened}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
+                      fetch(`/api/url/${url.shortened}/increment`, {
+                        method: "POST",
+                      }).then(() => {
+                        fetchUrls();
+                      });
+                    }}
+                  >
+                    {window.location.origin}/api/url/{url.shortened}
+                  </a>
+                </span>
+                <span className="click-count">(Clicks: {url.clickCount})</span>
+              </div>
+              <br />
+              <div>
+                <strong>Original:</strong> {url.originalUrl}
+              </div>
                 <div className="url-actions">
                   <button
                     onClick={() => {
